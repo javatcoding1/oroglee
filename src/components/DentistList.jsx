@@ -6,10 +6,14 @@ function DentistList() {
   const [dentists, setDentists] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Base API URL (from Vercel env)
+  const API = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
     const fetchDentists = async () => {
       try {
-        const response = await axios.get('/api/dentists');
+        // ✅ FIXED: use backend URL
+        const response = await axios.get(`${API}/api/dentists`);
         setDentists(response.data);
       } catch (error) {
         console.error('Error fetching dentists:', error);
@@ -17,8 +21,9 @@ function DentistList() {
         setLoading(false);
       }
     };
+
     fetchDentists();
-  }, []);
+  }, [API]);
 
   const renderSkeleton = () => (
     <div className="container">
@@ -31,7 +36,7 @@ function DentistList() {
         {[1, 2, 3, 4, 5, 6].map((i) => (
           <div key={i} className="skeleton-card">
             <div style={{ display: 'flex', gap: 14, marginBottom: 16 }}>
-              <div className="skeleton" style={{ width: 52, height: 52, borderRadius: 10, flexShrink: 0 }} />
+              <div className="skeleton" style={{ width: 52, height: 52, borderRadius: 10 }} />
               <div style={{ flex: 1 }}>
                 <div className="skeleton" style={{ width: '70%', height: 14, marginBottom: 8 }} />
                 <div className="skeleton" style={{ width: '45%', height: 10 }} />
@@ -55,8 +60,7 @@ function DentistList() {
       <div className="hero">
         <div className="hero-badge">✨ Trusted by 10,000+ patients</div>
         <h1>
-          Book Your Next{' '}
-          <em>Dental Visit</em>
+          Book Your Next <em>Dental Visit</em>
         </h1>
         <p>Find top-rated dental professionals and schedule your appointment in seconds.</p>
       </div>
@@ -100,7 +104,6 @@ function DentistList() {
             <Link
               to={`/book/${dentist._id}`}
               className="btn btn-primary"
-              id={`book-dentist-${dentist._id}`}
             >
               Book Appointment →
             </Link>

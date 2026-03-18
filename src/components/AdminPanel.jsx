@@ -10,7 +10,7 @@ function AdminPanel() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-
+  const API = import.meta.env.VITE_API_URL;
   // Check session
   useEffect(() => {
     const session = sessionStorage.getItem('admin_auth');
@@ -24,7 +24,7 @@ function AdminPanel() {
     if (!authenticated) return;
     setLoading(true);
     axios
-      .get('/api/appointments')
+      .get(`${API}/api/appointments`)
       .then((res) => setAppointments(res.data))
       .catch((err) => console.error('Error fetching appointments:', err))
       .finally(() => setLoading(false));
@@ -35,7 +35,7 @@ function AdminPanel() {
     setLoginError('');
     setLoggingIn(true);
     try {
-      const res = await axios.post('/api/admin/login', loginData);
+      const res = await axios.post(`${API}/api/admin/login`, loginData);
       if (res.data.success) {
         sessionStorage.setItem('admin_auth', 'true');
         setAuthenticated(true);
