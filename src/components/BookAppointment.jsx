@@ -43,6 +43,8 @@ function BookAppointment() {
         ...formData,
         age: parseInt(formData.age),
         dentist_id: dentistId,
+        dentist_name: dentist.name,
+        clinic_name: dentist.clinic_name,
       });
       setSuccess(response.data);
     } catch (error) {

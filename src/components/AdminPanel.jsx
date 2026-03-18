@@ -53,6 +53,29 @@ function AdminPanel() {
     setLoginData({ username: '', password: '' });
   };
 
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await axios.put(`${API}/api/appointments/${id}/status`, { status: newStatus });
+      setAppointments((prev) =>
+        prev.map((apt) => (apt.id === id ? { ...apt, status: newStatus } : apt))
+      );
+    } catch (err) {
+      console.error('Error updating status:', err);
+      alert('Failed to update status.');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this appointment?')) return;
+    try {
+      await axios.delete(`${API}/api/appointments/${id}`);
+      setAppointments((prev) => prev.filter((apt) => apt.id !== id));
+    } catch (err) {
+      console.error('Error deleting appointment:', err);
+      alert('Failed to delete appointment.');
+    }
+  };
+
   const filteredAppointments = appointments.filter((apt) => {
     const q = search.toLowerCase();
     return (
@@ -155,7 +178,7 @@ function AdminPanel() {
           <table className="data-table">
             <thead>
               <tr>
-                {['Patient', 'Email', 'Age', 'Gender', 'Date', 'Dentist', 'Clinic'].map((h) => (
+                {['Patient', 'Email', 'Age', 'Gender', 'Date', 'Dentist', 'Clinic', 'Status', 'Actions'].map((h) => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -163,7 +186,7 @@ function AdminPanel() {
             <tbody>
               {[1, 2, 3, 4].map((i) => (
                 <tr key={i}>
-                  {[1, 2, 3, 4, 5, 6, 7].map((j) => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((j) => (
                     <td key={j}>
                       <div
                         className="skeleton"
@@ -197,6 +220,8 @@ function AdminPanel() {
                 <th>Date</th>
                 <th>Dentist</th>
                 <th>Clinic</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -213,6 +238,27 @@ function AdminPanel() {
                   <td>{formatDate(apt.appointment_date)}</td>
                   <td className="table-cell-accent">{apt.dentist_name}</td>
                   <td>{apt.clinic_name}</td>
+                  <td>
+                    <select
+                      className="form-select"
+                      style={{ padding: '4px 8px', fontSize: '12px', minWidth: '100px' }}
+                      value={apt.status || 'Scheduled'}
+                      onChange={(e) => handleStatusChange(apt.id, e.target.value)}
+                    >
+                      <option value="Scheduled">Scheduled</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-secondary"
+                      style={{ padding: '4px 8px', fontSize: '12px' }}
+                      onClick={() => handleDelete(apt.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
