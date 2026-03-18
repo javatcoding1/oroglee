@@ -9,6 +9,8 @@ function BookAppointment() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(null);
+  const [globalError, setGlobalError] = useState('');
+  const [formErrors, setFormErrors] = useState({});
   const [formData, setFormData] = useState({
     patient_name: '',
     email: '',
@@ -35,8 +37,24 @@ function BookAppointment() {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (formData.patient_name.trim().length < 2) errors.patient_name = 'Name must be at least 2 characters';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Please enter a valid email address';
+    if (!formData.age || formData.age < 1 || formData.age > 120) errors.age = 'Please enter a valid age';
+    if (!formData.gender) errors.gender = 'Please select a gender';
+    if (!formData.appointment_date) errors.appointment_date = 'Please select a date';
+    else if (new Date(formData.appointment_date) < new Date(today)) errors.appointment_date = 'Date cannot be in the past';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setGlobalError('');
+    if (!validateForm()) return;
+    
     setSubmitting(true);
     try {
       const response = await axios.post(`${API}/api/appointments`, {
@@ -49,7 +67,7 @@ function BookAppointment() {
       setSuccess(response.data);
     } catch (error) {
       console.error('Error booking appointment:', error);
-      alert('Failed to book appointment. Please try again.');
+      setGlobalError(error.response?.data?.message || 'Failed to book appointment. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -163,6 +181,12 @@ function BookAppointment() {
         </div>
 
         <div className="form-card-body">
+          {globalError && (
+            <div className="auth-error" style={{ marginBottom: '20px' }}>
+              ⚠️ {globalError}
+            </div>
+          )}
+
           {dentist && (
             <div className="form-dentist-preview">
               <img src={dentist.photo} alt={dentist.name} />
@@ -177,77 +201,75 @@ function BookAppointment() {
             <div className="form-group">
               <label className="form-label" htmlFor="patient_name">Full Name</label>
               <input
-                className="form-input"
+                className={`form-input ${formErrors.patient_name ? 'is-invalid' : ''}`}
                 type="text"
                 id="patient_name"
                 name="patient_name"
                 placeholder="Enter your full name"
                 value={formData.patient_name}
                 onChange={handleChange}
-                required
               />
+              {formErrors.patient_name && <div className="form-error-text">⚠️ {formErrors.patient_name}</div>}
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="email">Email Address</label>
               <input
-                className="form-input"
+                className={`form-input ${formErrors.email ? 'is-invalid' : ''}`}
                 type="email"
                 id="email"
                 name="email"
                 placeholder="you@example.com"
                 value={formData.email}
                 onChange={handleChange}
-                required
               />
+              {formErrors.email && <div className="form-error-text">⚠️ {formErrors.email}</div>}
             </div>
 
             <div className="form-row">
               <div className="form-group">
                 <label className="form-label" htmlFor="age">Age</label>
                 <input
-                  className="form-input"
+                  className={`form-input ${formErrors.age ? 'is-invalid' : ''}`}
                   type="number"
                   id="age"
                   name="age"
                   placeholder="e.g. 28"
-                  min="1"
-                  max="120"
                   value={formData.age}
                   onChange={handleChange}
-                  required
                 />
+                {formErrors.age && <div className="form-error-text">⚠️ {formErrors.age}</div>}
               </div>
               <div className="form-group">
                 <label className="form-label" htmlFor="gender">Gender</label>
                 <select
-                  className="form-select"
+                  className={`form-select ${formErrors.gender ? 'is-invalid' : ''}`}
                   id="gender"
                   name="gender"
                   value={formData.gender}
                   onChange={handleChange}
-                  required
                 >
                   <option value="">Select</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other</option>
                 </select>
+                {formErrors.gender && <div className="form-error-text">⚠️ {formErrors.gender}</div>}
               </div>
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="appointment_date">Preferred Date</label>
               <input
-                className="form-input"
+                className={`form-input ${formErrors.appointment_date ? 'is-invalid' : ''}`}
                 type="date"
                 id="appointment_date"
                 name="appointment_date"
                 min={today}
                 value={formData.appointment_date}
                 onChange={handleChange}
-                required
               />
+              {formErrors.appointment_date && <div className="form-error-text">⚠️ {formErrors.appointment_date}</div>}
             </div>
           </form>
         </div>

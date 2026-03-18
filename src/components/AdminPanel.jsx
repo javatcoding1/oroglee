@@ -10,7 +10,16 @@ function AdminPanel() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [toast, setToast] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const API = import.meta.env.VITE_API_URL;
+
+  const showToast = (type, title, message) => {
+    setToast({ type, title, message });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // Check session
   useEffect(() => {
     const session = sessionStorage.getItem('admin_auth');
@@ -59,9 +68,10 @@ function AdminPanel() {
       setAppointments((prev) =>
         prev.map((apt) => (apt.id === id ? { ...apt, status: newStatus } : apt))
       );
+      showToast('success', 'Status Updated', 'The appointment status has been changed.');
     } catch (err) {
       console.error('Error updating status:', err);
-      alert('Failed to update status.');
+      showToast('error', 'Update Failed', 'Could not change the status.');
     }
   };
 
@@ -70,9 +80,10 @@ function AdminPanel() {
     try {
       await axios.delete(`${API}/api/appointments/${id}`);
       setAppointments((prev) => prev.filter((apt) => apt.id !== id));
+      showToast('info', 'Deleted', 'The appointment was successfully removed.');
     } catch (err) {
       console.error('Error deleting appointment:', err);
-      alert('Failed to delete appointment.');
+      showToast('error', 'Delete Failed', 'Could not delete the appointment.');
     }
   };
 
@@ -85,6 +96,13 @@ function AdminPanel() {
       apt.clinic_name.toLowerCase().includes(q)
     );
   });
+
+  const totalPages = Math.ceil(filteredAppointments.length / itemsPerPage);
+  const currentAppointments = filteredAppointments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const formatDate = (dateStr) =>
     new Date(dateStr).toLocaleDateString('en-US', {
@@ -225,7 +243,7 @@ function AdminPanel() {
               </tr>
             </thead>
             <tbody>
-              {filteredAppointments.map((apt) => (
+              {currentAppointments.map((apt) => (
                 <tr key={apt.id}>
                   <td className="table-cell-primary">{apt.patient_name}</td>
                   <td>{apt.email}</td>
@@ -263,6 +281,51 @@ function AdminPanel() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button 
+            className="page-btn" 
+            disabled={currentPage === 1} 
+            onClick={() => setCurrentPage(p => p - 1)}
+          >
+            &lt;
+          </button>
+          
+          {[...Array(totalPages)].map((_, i) => (
+            <button 
+              key={i + 1} 
+              className={`page-btn ${currentPage === i + 1 ? 'active' : ''}`}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button 
+            className="page-btn" 
+            disabled={currentPage === totalPages} 
+            onClick={() => setCurrentPage(p => p + 1)}
+          >
+            &gt;
+          </button>
+        </div>
+      )}
+
+      {toast && (
+        <div className="toast-container">
+          <div className={`toast toast-${toast.type}`}>
+            <div className="toast-icon">
+              {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'}
+            </div>
+            <div className="toast-content">
+              <h4>{toast.title}</h4>
+              <p>{toast.message}</p>
+            </div>
+            <button className="toast-close" onClick={() => setToast(null)}>×</button>
+          </div>
         </div>
       )}
     </div>
